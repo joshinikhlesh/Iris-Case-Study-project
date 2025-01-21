@@ -1,0 +1,170 @@
+version: '3.8'
+
+services:
+  mysql-container:
+    image: mysql
+    container_name: mysqlDockerContainer
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: users
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    networks:
+      - ecom-networks
+    ports:
+      - "3308:3306"
+
+  config-server:
+    image: config-server
+    container_name: /ecom/config-server-container
+    networks:
+      - ecom-network
+    ports:
+      - "8088:8088"
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+
+  service-registry:
+    image: service-registry
+    container_name: /ecom/service-registry-container
+    networks:
+      - ecom-network
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    image: api-gateway
+    container_name: /ecom/api-gateway-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+    networks:
+      - ecom-network
+    ports:
+      - "8081:8081"
+    depends_on:
+      - service-registry
+      - config-server
+
+  product-service:
+    image: product-service
+    container_name: /ecom/product-service-container
+    networks:
+      - ecom-network
+    ports:
+      - "8084:8084"
+    depends_on:
+      - service-registry
+      - config-server
+      - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+  user-service:
+    image: user-service
+    container_name: ecom/user-service
+    networks:
+      - ecommerce-network
+    ports:
+      - "8083:8083"
+    depends_on:
+      - service-registry
+      - config-server
+      - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+  order-service:
+    image: order-service
+    container_name: ecom/order-service
+    networks:
+      - ecommerce-network
+    ports:
+      - "8085:8085"
+    depends_on:
+      - service-registry
+      - config-server
+      - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+  card-validation-service:
+    image: card-validation-service
+    container_name: ecom/card-validation-service
+    networks:
+      - ecommerce-network
+    ports:
+      - "8087:8087"
+    depends_on:
+      - service-registry
+      - config-server
+      - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+  payment-service:
+    image: payment-service
+    container_name: payment-service
+    networks:
+      - ecommerce-network
+    ports:
+      - "8086:8086"
+    depends_on:
+      - service-registry
+      - config-server
+      - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+  authentication-service:
+    image: user-authentication-service
+    container_name: authentication-service
+    networks:
+      - ecommerce-network
+    ports:
+        - "8082:8082"
+    depends_on:
+        - service-registry
+        - config-server
+        - my-sql-docker-container
+    environment:
+      EUREKA_SERVER_ADDRESS: http://host.docker.internal:8761/eureka/eureka/
+      CONFIG_SERVER_URL: http://config-server-container:8088
+      MYSQL_HOST: my-sql-docker-container
+      MYSQL_PORT: 3308
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: products
+
+networks:
+  ecom-network:
+    driver: bridge
